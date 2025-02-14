@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SourceTx {
+  txHash       String   @id // Primary Key
+  chainId      String
+  toChainId    String
+  msgId        String
+  asset        String
+  amount       String
+  senderAddr   String
+  receiverAddr String
+  timestamp    DateTime @default(now())
+  block        String
+  txId         String   @unique
+  txData       TxData   @relation(fields: [txId], references: [sourceTxHash])
+}
+
+model DestTx {
+  txHash      String   @id // Primary Key
+  chainId     String
+  fromChainId String
+  msgId       String
+  asset       String
+  amount      String
+  timestamp   DateTime @default(now())
+  txId        String   @unique
+  txData      TxData   @relation(fields: [txId], references: [destTxHash])
+}
+
+model TxData {
+  txId         String    @id @default(uuid())
+  sourceTx     SourceTx?
+  destTx       DestTx?
+  status       Status
+  message      Bytes
+  createdAt    DateTime  @default(now())
+  sourceTxHash String    @unique
+  destTxHash   String?   @unique
+}
+
+enum Status {
+  SENT
+  RECEIVED
+}

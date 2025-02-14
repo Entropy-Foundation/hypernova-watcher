@@ -2,7 +2,7 @@ use crate::kafka;
 use crate::types::TxnConfig;
 use alloy::eips::BlockId;
 use alloy::network::primitives::BlockTransactionsKind;
-use alloy::primitives::{Address};
+use alloy::primitives::Address;
 use alloy::{
     consensus::Transaction,
     providers::{Provider, ProviderBuilder, WsConnect},

@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -18,8 +19,7 @@ model SourceTx {
   receiverAddr String
   timestamp    DateTime @default(now())
   block        String
-  txId         String   @unique
-  txData       TxData   @relation(fields: [txId], references: [sourceTxHash])
+  txData       TxData?
 }
 
 model DestTx {
@@ -30,19 +30,19 @@ model DestTx {
   asset       String
   amount      String
   timestamp   DateTime @default(now())
-  txId        String   @unique
-  txData      TxData   @relation(fields: [txId], references: [destTxHash])
+  block       String
+  txData      TxData?
 }
 
 model TxData {
-  txId         String    @id @default(uuid())
-  sourceTx     SourceTx?
-  destTx       DestTx?
-  status       Status
-  message      Bytes
-  createdAt    DateTime  @default(now())
-  sourceTxHash String    @unique
+  id           String   @id @default(uuid())
+  sourceTx     SourceTx @relation(fields: [sourceTxHash], references: [txHash])
+  sourceTxHash String   @unique
+  destTx       DestTx?   @relation(fields: [destTxHash], references: [txHash])
   destTxHash   String?   @unique
+  status       Status
+  message      Bytes?
+  createdAt    DateTime @default(now())
 }
 
 enum Status {

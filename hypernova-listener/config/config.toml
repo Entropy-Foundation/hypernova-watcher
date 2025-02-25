@@ -2,20 +2,20 @@
 brokers = "kafka:9092"
 
 [[events]]
-rpc_url = "wss://sepolia.infura.io/ws/v3/8dd4a35393c04ed8a4c1c563c8ea099e"
-contract_address = "0x87266588539E70BcF47eaa5ce89949cEF5746De4"
-event_name = "MessageEvent(string)"
+rpc_url = "wss://eth-sepolia.g.alchemy.com/v2/PvLeTNClkXBHhrLSK7-ulPtES2QFEvKI"
+contract_address = "0xB218E24BCc79364FF54d4D8332fF466f1D7E164E"
+event_name = "MessagePosted(address,uint256,uint256,bytes)"
 kafka_topic = "KAFKA_TOPIC_1"
 
 [[events]]
-rpc_url = "wss://linea-sepolia.infura.io/ws/v3/8dd4a35393c04ed8a4c1c563c8ea099e"
+rpc_url = "wss://eth-holesky.g.alchemy.com/v2/PvLeTNClkXBHhrLSK7-ulPtES2QFEvKI"
 contract_address = "0xB0dE0169FaC706B2545b8B03E0aAf4Df9B699bc5" 
 event_name = "NumberEvent(uint256)"
 kafka_topic = "KAFKA_TOPIC_1"
 
 
 [[txns]]
-rpc_url = "wss://sepolia.infura.io/ws/v3/8dd4a35393c04ed8a4c1c563c8ea099e"
+rpc_url = "wss://eth-holesky.g.alchemy.com/v2/PvLeTNClkXBHhrLSK7-ulPtES2QFEvKI"
 contract_address = "0x87266588539E70BcF47eaa5ce89949cEF5746De4" 
 function_sig = "emitMessage(string)"
 kafka_topic = "KAFKA_TOPIC_2"

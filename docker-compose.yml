@@ -43,17 +43,6 @@ services:
     depends_on:
       - kafka
 
-  postgres:
-    image: postgres:latest
-    container_name: postgres
-    restart: always
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: mydatabase
-    ports:
-      - "5432:5432"
-
   committer:
     build:
       context: ./committer  # Path to the consumer app directory
@@ -62,7 +51,5 @@ services:
     restart: always
     depends_on:
       - kafka
-      - postgres
     environment:
       KAFKA_BROKER: "kafka:9092"
-      POSTGRES_URL: "postgres://user:password@postgres:5432/mydatabase"    

@@ -11,8 +11,9 @@ use eyre::Result;
 use futures_util::StreamExt;
 use rdkafka::producer::FutureProducer;
 use std::str::FromStr;
+use serde_json::json;
 
-pub async fn watch_txn(txn: TxnConfig, producer: FutureProducer) -> Result<(), eyre::Report> {
+pub async fn watch_txn(txn: TxnConfig, producer: FutureProducer, owner_addr: Address) -> Result<(), eyre::Report> {
     println!("Watching Txns on {}", txn.rpc_url);
     let txn_data = format!("{:?}", txn);
     println!("Txn config {}", txn_data);
@@ -36,6 +37,7 @@ pub async fn watch_txn(txn: TxnConfig, producer: FutureProducer) -> Result<(), e
             contract_address,
             txn.clone(),
             producer.clone(),
+            owner_addr.clone(),
         )
         .await?;
     }
@@ -47,6 +49,7 @@ async fn process_block<P: Provider>(
     contract: Address,
     txn: TxnConfig,
     producer: FutureProducer,
+    owner: Address,
 ) -> Result<()> {
     if let Some(block) = provider
         .get_block(BlockId::from(block_number), BlockTransactionsKind::Full)
@@ -54,7 +57,7 @@ async fn process_block<P: Provider>(
     {
         for tx in block.transactions.txns() {
             if let Some(to) = tx.to() {
-                if to == contract {
+                if to == contract && tx.from != owner {
                     if let Some(receipt) = provider
                         .get_transaction_receipt(*tx.inner.tx_hash())
                         .await?
@@ -65,13 +68,20 @@ async fn process_block<P: Provider>(
                                 &tx.inner.tx_hash(),
                                 block_number
                             );
+                            let source_tx_data = json!({
+                                "txHash": tx.inner.tx_hash().to_string(),
+                                "chainId": tx.chain_id().unwrap_or(0).to_string(),
+                                "input": tx.input()
+                                
+                            });
                             if let Err(e) = kafka::send_to_kafka(
                                 &producer,
                                 &txn.kafka_topic,
                                 &txn.function_sig,
-                                &tx.input().to_string(),
+                                &source_tx_data.to_string(),
                             )
                             .await
+                            
                             {
                                 println!("Error sending kafka to Kafka: {:?}", e);
                             }

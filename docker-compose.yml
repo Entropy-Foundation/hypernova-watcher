@@ -42,12 +42,23 @@ services:
     restart: always   
     depends_on:
       - kafka
-
+  
   committer:
     build:
       context: ./committer  # Path to the consumer app directory
       dockerfile: Dockerfile    # Make sure the Dockerfile is in the consumer app folder
     container_name: data-committer
+    restart: always
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BROKER: "kafka:9092"    
+
+  supra-listener:
+    build:
+      context: ./hypernova-supra-listener  # Path to your TypeScript project
+      dockerfile: Dockerfile  # Dockerfile for your TypeScript app
+    container_name: supra-listener
     restart: always
     depends_on:
       - kafka

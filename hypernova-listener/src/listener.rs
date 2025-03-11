@@ -11,9 +11,13 @@ use alloy::{
 use eyre::Result;
 use futures_util::stream::StreamExt;
 use rdkafka::producer::FutureProducer;
+use serde_json::json;
 use tokio::time::sleep;
 
-pub async fn listen_to_chain(event: EventConfig, producer: FutureProducer) -> Result<(), eyre::Report> {
+pub async fn listen_to_chain(
+    event: EventConfig,
+    producer: FutureProducer,
+) -> Result<(), eyre::Report> {
     loop {
         println!("Connecting to {}", event.rpc_url);
 
@@ -36,10 +40,26 @@ pub async fn listen_to_chain(event: EventConfig, producer: FutureProducer) -> Re
                         );
 
                         while let Some(log) = stream.next().await {
-                            let log_data = format!("{:?}", log.inner.data.data);
-                            println!("New Event [{}]: {}", event.event_name, log_data);
-
-                            if let Err(e) = kafka::send_to_kafka(&producer, &event.kafka_topic, &event.event_name, &log_data).await {
+                            let caller_addr = log.topics()[1];
+                            let msg_id = log.topics()[2];
+                            let to_chain_id = log.topics()[3];
+                            let msg_data = log.inner.data.data;
+                            let source_tx_data = json!({
+                            "txHash": log.transaction_hash.as_ref().map(|n| n.to_string()).unwrap_or("None".to_string()),
+                            "blockNumber": log.block_number.as_ref().map(|n| n.to_string()).unwrap_or("None".to_string()),
+                                "msgId": msg_id.to_string(),
+                                "toChainId": to_chain_id.to_string(),
+                                "callerAddr": caller_addr.to_string(),
+                                "msgData": msg_data.to_string()
+                            });
+                            if let Err(e) = kafka::send_to_kafka(
+                                &producer,
+                                &event.kafka_topic,
+                                &event.event_name,
+                                &source_tx_data.to_string(),
+                            )
+                            .await
+                            {
                                 eprintln!("Failed to send to Kafka: {:?}", e);
                             }
                         }

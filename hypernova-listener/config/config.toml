@@ -3,8 +3,8 @@ brokers = "kafka:9092"
 
 [[events]]
 rpc_url = "wss://sepolia.infura.io/ws/v3/8dd4a35393c04ed8a4c1c563c8ea099e"
-contract_address = "0x87266588539E70BcF47eaa5ce89949cEF5746De4"
-event_name = "MessageEvent(string)"
+contract_address = "0x6183a53D55f255A1C48c9c641F19bD5cc7B1786c"
+event_name = "MessagePosted(address,uint256,uint256,bytes)"
 kafka_topic = "KAFKA_TOPIC_1"
 
 [[events]]
@@ -16,6 +16,6 @@ kafka_topic = "KAFKA_TOPIC_1"
 
 [[txns]]
 rpc_url = "wss://sepolia.infura.io/ws/v3/8dd4a35393c04ed8a4c1c563c8ea099e"
-contract_address = "0x87266588539E70BcF47eaa5ce89949cEF5746De4" 
-function_sig = "emitMessage(string)"
+contract_address = "0x6183a53D55f255A1C48c9c641F19bD5cc7B1786c" 
+function_sig = "postMessage()"
 kafka_topic = "KAFKA_TOPIC_2"

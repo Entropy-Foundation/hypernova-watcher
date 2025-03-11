@@ -43,3 +43,30 @@ services:
     depends_on:
       - kafka
 
+  hn-supra-listener:
+    build:
+      context: ./hypernova-supra-listener
+      dockerfile: Dockerfile
+    container_name: hn-supra-listener
+    restart: always   
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BROKER: "kafka:9092"
+
+  data-committer:
+    build:
+      context: ./data-committer
+      dockerfile: Dockerfile
+    container_name: data-committer
+    restart: always   
+    depends_on:
+      - kafka      
+
+  redis:
+    image: redis/redis-stack:latest
+    container_name: redis-stack
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    restart: unless-stopped    

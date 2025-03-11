@@ -3,6 +3,7 @@ use crate::types::TxnConfig;
 use alloy::eips::BlockId;
 use alloy::network::primitives::BlockTransactionsKind;
 use alloy::primitives::{Address};
+use serde_json::json;
 use alloy::{
     consensus::Transaction,
     providers::{Provider, ProviderBuilder, WsConnect},
@@ -65,11 +66,16 @@ async fn process_block<P: Provider>(
                                 &tx.inner.tx_hash(),
                                 block_number
                             );
+                            println!("Txn Input: {}", &tx.inner.input());
+                            let input_data = json!({
+                                "input" : &tx.inner.input(),
+                                "txHash" : &tx.inner.tx_hash()
+                            });
                             if let Err(e) = kafka::send_to_kafka(
                                 &producer,
                                 &txn.kafka_topic,
                                 &txn.function_sig,
-                                &tx.input().to_string(),
+                                &input_data.to_string(),
                             )
                             .await
                             {

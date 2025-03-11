@@ -1,0 +1,25 @@
+{
+  "name": "data-committer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "child_process": "^1.0.2",
+    "dotenv": "^16.4.7",
+    "ethers": "^6.13.5",
+    "kafkajs": "^2.2.4",
+    "redis": "^4.7.0",
+    "redis-om": "^0.4.7"
+  }
+}

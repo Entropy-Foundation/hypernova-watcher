@@ -1,13 +1,11 @@
 import { Kafka } from 'kafkajs';
 import { KAFKA_BROKER, KAFKA_TOPICS } from './config/dotenv';
-import { ethers } from 'ethers';
-import { Repository } from 'redis-om';
-import { sourceEventSchema } from './redis/schema';
+import { ethers, keccak256 } from 'ethers';
+
 import { redisClient } from './redis/client';
 
 const kafka = new Kafka({ brokers: [KAFKA_BROKER] });
 const consumer = kafka.consumer({ groupId: 'kafkajs-3c49d217-344a-4cea-a015-3280781ca5e7' });
-const sourceEventRepo = new Repository(sourceEventSchema, redisClient);
 const abiCoder = ethers.AbiCoder.defaultAbiCoder();
 const structType = [
   "bytes32",
@@ -27,33 +25,73 @@ const processTopic1 = async (msgJson: any) => {
 
   const eventData = {
     fromChainId: decoded[2].toString(),
-    toChainId: msgJson.toChainId,
+    toChainId: msgJson.toChainId.toString(),
     amount: decoded[4].toString(),
-    asset: typeof (decoded[1]) === 'string' ? decoded[1] : decoded[1].toString(),
-    msgId: msgJson.msgId,
-    receiverAddr: decoded[6],
-    txHash: msgJson.txHash
+    asset: decoded[1].toString(),
+    receiverAddr: decoded[6].toString()
   };
+
+  const eventHash = keccak256(abiCoder.encode(["string", "string", "string", "string", "string"], Object.values(eventData)))
+
   try {
     await redisClient.connect();
-    const postedEvent = await sourceEventRepo.save(eventData);
+    await redisClient.set(`${msgJson.txHash}:srcEvent`, eventHash);
+    await redisClient.set(`${msgJson.msgId}:destTx`, eventHash);
+    redisClient.disconnect();
   } catch (error) {
     return error;
   }
-  console.log('Message stored in PostgreSQL for Topic 1');
-
 };
 
 // Function to process Topic 2 messages
-const processTopic2 = async (msgJson: any) => {
-  try {
-    console.log("Processing Topic 2 Message:", msgJson);
+const processTopic2 = async (msgJson: any, key: string) => {
+  if (key === "45cbf507") { //func sig of sendNative
+    const abi = ["function sendNative(bytes32 receiverAddr, bytes32 payload, uint256 toChainId)"];
+    const iface = new ethers.Interface(abi);
+    const decoded = iface.parseTransaction({ data: msgJson.input })
 
-    // decode input data and store in redis 
+    const txData = {
+      fromChainId: msgJson.sourceChainId.toString(),
+      toChainId: decoded?.args[2].toString(),
+      amount: msgJson.amount.toString(),
+      asset: "0x3078333137343462393633643164383336373061373534463833323634466533", //"bytes32(WETHAddr)" need to take this from env
+      receiverAddr: decoded?.args[0].toString()
+    };
 
-    console.log("Message stored in PostgreSQL for Topic 2");
-  } catch (error) {
-    console.error("Error storing message for Topic 2:", error);
+    const txHash = keccak256(abiCoder.encode(["string", "string", "string", "string", "string"], Object.values(txData)));
+
+    try {
+      await redisClient.connect();
+      await redisClient.set(`${msgJson.txHash}:srcTx`, txHash);
+      redisClient.disconnect();
+    } catch (error) {
+      return error;
+    }
+
+  } else if (key === "6e8e6932") { // func sig of sendTokens
+    const abi = ["function sendTokens(address tokenAddr, uint64 amount, bytes32 receiverAddr, bytes32 payload, uint256 toChainId)"];
+    const iface = new ethers.Interface(abi);
+    const decoded = iface.parseTransaction({ data: msgJson.input })
+
+    const txData = {
+      fromChainId: msgJson.sourceChainId.toString(),
+      toChainId: decoded?.args[4].toString(),
+      amount: decoded?.args[1].toString(),
+      asset: "0x3078333137343462393633643164383336373061373534463833323634466533", // "bytes32(decoded?.args[0])" 
+      receiverAddr: decoded?.args[2].toString()
+    }
+
+    const txHash = keccak256(abiCoder.encode(["string", "string", "string", "string", "string"], Object.values(txData)));
+
+    try {
+      await redisClient.connect();
+      await redisClient.set(`${msgJson.txHash}:srcTx`, txHash);
+      redisClient.disconnect();
+    } catch (error) {
+      return error;
+    }
+  } else {
+    console.warn("Received some other txn");
   }
 };
 
@@ -66,16 +104,16 @@ export const startConsumer = async () => {
 
   await consumer.run({
     eachMessage: async ({ topic, message }) => {
+      let key = message.key?.toString("utf-8");
       const msgString = message.value?.toString("utf-8");
       if (!msgString) return;
 
       try {
         const msgJson = JSON.parse(msgString);
-
         if (topic === KAFKA_TOPICS[0]) {
           await processTopic1(msgJson);
         } else if (topic === KAFKA_TOPICS[1]) {
-          await processTopic2(msgJson);
+          await processTopic2(msgJson, key || '');
         } else {
           console.warn(`Received message for unknown topic: ${topic}`);
         }

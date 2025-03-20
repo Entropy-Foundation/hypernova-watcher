@@ -24,6 +24,5 @@ pub struct EventConfig {
 pub struct TxnConfig {
     pub rpc_url: String,
     pub contract_address: String,
-    pub function_sig: String,
     pub kafka_topic: String,
 }

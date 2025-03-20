@@ -1,5 +1,5 @@
 import { Kafka } from "kafkajs";
-import { KAFKA_BROKER } from "./config/dotenv";
+import { KAFKA_BROKER } from "../config/dotenv";
 
 const kafka = new Kafka({
     brokers: [KAFKA_BROKER],

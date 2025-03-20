@@ -2,7 +2,7 @@ use crate::kafka;
 use crate::types::TxnConfig;
 use alloy::eips::BlockId;
 use alloy::network::primitives::BlockTransactionsKind;
-use alloy::primitives::{Address};
+use alloy::primitives::{Address, U256};
 use serde_json::json;
 use alloy::{
     consensus::Transaction,
@@ -12,6 +12,7 @@ use eyre::Result;
 use futures_util::StreamExt;
 use rdkafka::producer::FutureProducer;
 use std::str::FromStr;
+use hex;
 
 pub async fn watch_txn(txn: TxnConfig, producer: FutureProducer) -> Result<(), eyre::Report> {
     println!("Watching Txns on {}", txn.rpc_url);
@@ -69,12 +70,14 @@ async fn process_block<P: Provider>(
                             println!("Txn Input: {}", &tx.inner.input());
                             let input_data = json!({
                                 "input" : &tx.inner.input(),
-                                "txHash" : &tx.inner.tx_hash()
+                                "txHash" : &tx.inner.tx_hash(),
+                                "sourceChainId": &tx.chain_id(),
+                                "amount" : U256::from(tx.value()).to_string()
                             });
                             if let Err(e) = kafka::send_to_kafka(
                                 &producer,
                                 &txn.kafka_topic,
-                                &txn.function_sig,
+                                &hex::encode(&tx.inner.input()[..4]),
                                 &input_data.to_string(),
                             )
                             .await

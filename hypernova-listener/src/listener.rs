@@ -4,7 +4,7 @@ use std::time::Duration;
 use crate::kafka;
 use crate::types::EventConfig;
 use alloy::{
-    primitives::Address,
+    primitives::{Address, U256},
     providers::{Provider, ProviderBuilder, WsConnect},
     rpc::types::{BlockNumberOrTag, Filter},
 };
@@ -48,7 +48,7 @@ pub async fn listen_to_chain(
                             "txHash": log.transaction_hash.as_ref().map(|n| n.to_string()).unwrap_or("None".to_string()),
                             "blockNumber": log.block_number.as_ref().map(|n| n.to_string()).unwrap_or("None".to_string()),
                                 "msgId": msg_id.to_string(),
-                                "toChainId": to_chain_id.to_string(),
+                                "toChainId": (U256::try_from(to_chain_id).unwrap_or(U256::from(0))).to_string(), 
                                 "callerAddr": caller_addr.to_string(),
                                 "msgData": msg_data.to_string()
                             });

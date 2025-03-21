@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import { sendToKafka } from "./send-to-kafka";
-import { EVENT_TYPE, BASE_URL, KAFKA_TOPICS } from "./config/dotenv";
+import { EVENT_TYPE, BASE_URL, KAFKA_TOPIC } from "./config/dotenv";
 
 const MAX_NUM_OF_BLOCK_QUERY = 10;
 let lastEndBlock: number | null = null;
@@ -76,7 +76,7 @@ const getEventData = async () => {
                 console.log("No new events.");
                 return;
             }
-            await sendToKafka(KAFKA_TOPICS[2], "EVENT", JSON.stringify(data.data[0]?.data));
+            await sendToKafka(KAFKA_TOPIC, "EVENT", JSON.stringify(data.data[0]?.data));
         } catch (error) {
             console.error("Fetch error:", error);
         }

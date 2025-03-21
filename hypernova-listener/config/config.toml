@@ -5,10 +5,10 @@ brokers = "kafka:9092"
 rpc_url = "wss://eth-sepolia.g.alchemy.com/v2/PvLeTNClkXBHhrLSK7-ulPtES2QFEvKI"
 contract_address = "0x9C50de7B085a1235bA9Fe84ba14CB51121428856"
 event_name = "MessagePosted(address,uint256,uint256,bytes)"
-kafka_topic = "KAFKA_TOPIC_1"
+kafka_topic = "ETH_SRC_EVENT"
 
 [[txns]]
 rpc_url = "wss://eth-sepolia.g.alchemy.com/v2/PvLeTNClkXBHhrLSK7-ulPtES2QFEvKI"
 contract_address = "0x9C50de7B085a1235bA9Fe84ba14CB51121428856"
-kafka_topic = "KAFKA_TOPIC_2"
+kafka_topic = "ETH_SRC_TXN"
 
